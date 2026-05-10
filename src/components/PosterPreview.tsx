@@ -73,12 +73,12 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
         const parentWidth = containerRef.current.clientWidth;
         const parentHeight = containerRef.current.clientHeight;
 
-        // 40px padding for visual breathing room in the editor
-        const scaleW = (parentWidth - 40) / logicalWidth;
-        const scaleH = (parentHeight - 40) / logicalHeight;
+        // 160px padding for visual breathing room so the poster isn't huge
+        const scaleW = (parentWidth - 160) / logicalWidth;
+        const scaleH = (parentHeight - 160) / logicalHeight;
 
-        // Don't scale up past 1 unless necessary, mainly scale down to fit
-        setScale(Math.min(scaleW, scaleH, 1));
+        // Force a slightly smaller maximum scale (0.85) so it always looks clean and "short"
+        setScale(Math.min(scaleW, scaleH, 0.85));
       }
     };
 
@@ -126,8 +126,8 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
     bounds: "parent",
     position: { x: pos.x, y: pos.y },
     size: { width: pos.width || '100%', height: pos.height || 'auto' },
-    onDragStop: (e: any, d: any) => setter({ ...pos, x: d.x, y: d.y }),
-    onResizeStop: (e: any, direction: any, ref: any, delta: any, position: any) => {
+    onDragStop: (_e: any, d: any) => setter({ ...pos, x: d.x, y: d.y }),
+    onResizeStop: (_e: any, _direction: any, ref: any, _delta: any, position: any) => {
       setter({
         ...pos,
         width: ref.style.width,
@@ -141,7 +141,7 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
   });
 
   return (
-    <div className="poster-container overflow-hidden w-full h-full flex items-center justify-center bg-gray-100" ref={containerRef}>
+    <div className="poster-container overflow-hidden w-full h-full flex items-center justify-center bg-gray-50" ref={containerRef}>
 
       {/* SCALING WRAPPER */}
       <div

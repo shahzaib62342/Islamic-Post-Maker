@@ -25,8 +25,8 @@ body {
 /* Responsive Layout Logic */
 @media (min-width: 1024px) {
     #root {
-        flex-direction: row-reverse; /* Controls on left, Poster on right for LTR/RTL mix */
-        justify-content: center;
+        flex-direction: row;
+        justify-content: flex-start;
         align-items: stretch;
     }
 }
@@ -40,18 +40,22 @@ body {
     border-top: 1px solid #e5e7eb;
     z-index: 20;
     direction: ltr; /* Keeping UI labels English (LTR) */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 @media (min-width: 1024px) {
     .controls {
-        width: 400px;
+        width: 450px;
         border-top: none;
         border-right: 1px solid #e5e7eb;
         height: 100vh;
-        overflow-y: auto;
         position: fixed;
         left: 0;
         top: 0;
+        display: flex;
+        flex-direction: column;
     }
 }
 
@@ -67,16 +71,18 @@ body {
 
 @media (min-width: 1024px) {
     .poster-container {
-        margin-left: 400px; /* Offset for fixed sidebar */
+        margin-left: 450px; /* Offset for fixed sidebar */
         margin-bottom: 0;
         padding: 40px;
+        height: 100vh;
+        width: calc(100% - 450px);
     }
 }
 
 /* The Poster Canvas Aspect Ratios */
 #poster-canvas {
     width: 100%;
-    max-width: 450px; /* Standardize size for preview */
+    max-width: 1080px; /* Let the scaling wrapper handle size */
     background-image: url('https://i.ibb.co/5hhKkrh6/Chat-GPT-Image-May-10-2026-11-25-48-AM.png');
     background-size: cover;
     background-position: center;

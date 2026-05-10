@@ -1,0 +1,457 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --highlight-red: #8b0000;
+    --highlight-green: #006400;
+    --accent-gold: #c5a059;
+}
+
+body {
+    font-family: 'Noto Nastaliq Urdu', serif;
+    background-color: #f3f4f6;
+    margin: 0;
+    padding: 0;
+}
+
+#root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* Responsive Layout Logic */
+@media (min-width: 1024px) {
+    #root {
+        flex-direction: row-reverse; /* Controls on left, Poster on right for LTR/RTL mix */
+        justify-content: center;
+        align-items: stretch;
+    }
+}
+
+/* Controls Panel Styling */
+.controls {
+    background: white;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    border-top: 1px solid #e5e7eb;
+    z-index: 20;
+    direction: ltr; /* Keeping UI labels English (LTR) */
+}
+
+@media (min-width: 1024px) {
+    .controls {
+        width: 400px;
+        border-top: none;
+        border-right: 1px solid #e5e7eb;
+        height: 100vh;
+        overflow-y: auto;
+        position: fixed;
+        left: 0;
+        top: 0;
+    }
+}
+
+/* Poster Preview Area */
+.poster-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 1024px) {
+    .poster-container {
+        margin-left: 400px; /* Offset for fixed sidebar */
+        margin-bottom: 0;
+        padding: 40px;
+    }
+}
+
+/* The Poster Canvas */
+#poster-canvas {
+    width: 100%;
+    max-width: 450px; /* Standardize size for preview */
+    aspect-ratio: 500 / 750;
+    background-image: url('https://i.ibb.co/5hhKkrh6/Chat-GPT-Image-May-10-2026-11-25-48-AM.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12% 8% 10% 8%;
+    box-sizing: border-box;
+    background-color: white;
+}
+
+/* Typography Flow */
+.text-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    justify-content: space-between;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.header-text, .main-hadith, .reference {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    text-align: center;
+    width: 100%;
+    direction: rtl;
+}
+
+.header-text {
+    color: #1a1a1a;
+    line-height: 2;
+    margin-top: 45px;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.main-hadith {
+    color: #000;
+    line-height: 2.2;
+    text-shadow: 0px 0px 5px rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    margin: 10px 0;
+}
+
+.reference {
+    color: #444;
+    font-weight: 500;
+    border-top: 1px solid rgba(197, 160, 89, 0.3);
+    padding-top: 10px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+/* Dark Theme Overrides */
+.dark-theme .header-text {
+    color: #ffffff;
+}
+
+.dark-theme .main-hadith {
+    color: #ffffff;
+    text-shadow: 0px 0px 8px rgba(0,0,0,0.8);
+}
+
+.dark-theme .reference {
+    color: #e5e7eb;
+}
+
+.red-text { color: var(--highlight-red); font-weight: 700; }
+.green-text { color: var(--highlight-green); font-weight: 700; }
+
+/* UI Elements */
+textarea {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 12px;
+    direction: rtl;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.2);
+}
+
+.size-control {
+    margin-bottom: 12px;
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #f3f4f6;
+}
+
+input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent-gold);
+    cursor: pointer;
+}
+
+.btn-download {
+    width: 100%;
+    background: var(--accent-gold);
+    color: white;
+    padding: 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-download:active {
+    transform: scale(0.98);
+}
+
+/* Mobile specific adjustments to font baseline */
+@media (max-width: 640px) {
+    #poster-canvas {
+        padding: 20% 18% 10% 18%;
+    }
+    .text-container {
+        justify-content: center;
+        gap: 15px;
+    }
+    .header-text { margin-top: 0; }
+    .main-hadith { 
+        margin: 0; 
+        flex-grow: 0;
+        line-height: 1.8;
+    }
+    .reference { 
+        margin-bottom: 0; 
+        padding-top: 5px;
+    }
+}
+
+/* Corner Decoration Styles */
+.corner-decoration {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 120px;
+    height: auto;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.corner-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.corner-thumb {
+    width: 100%;
+    aspect-ratio: 1;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+}
+
+.side-btn {
+    flex: 1;
+    padding: 8px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: white;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.side-btn.active {
+    background: var(--accent-gold);
+    color: white;
+    border-color: var(--accent-gold);
+    box-shadow: 0 2px 4px rgba(197, 160, 89, 0.3);
+}
+
+.corner-thumb:hover {
+    border-color: var(--accent-gold);
+    transform: scale(1.05);
+}
+
+.corner-thumb.active {
+    border-color: var(--accent-gold);
+    background: #fffbeb;
+}
+
+.corner-thumb img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.none-thumb {
+    font-size: 10px;
+    font-weight: bold;
+    color: #9ca3af;
+    text-transform: uppercase;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: white;
+    width: 90%;
+    max-width: 700px;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    padding: 30px;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 15px;
+}
+
+.modal-preview-area {
+    background: #f9fafb;
+    border: 2px dashed #e5e7eb;
+    border-radius: 12px;
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-preview-label {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 10px;
+    font-weight: bold;
+    color: #9ca3af;
+    text-transform: uppercase;
+}
+
+.modal-corner-preview {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 100px;
+    height: auto;
+    transition: all 0.2s ease;
+}
+
+.btn-apply {
+    background: var(--accent-gold);
+    color: white;
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 700;
+    margin-top: 20px;
+    transition: transform 0.2s;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-apply:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(197, 160, 89, 0.3);
+}
+
+.btn-open-modal {
+    background: white;
+    border: 2px solid var(--accent-gold);
+    color: var(--accent-gold);
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.btn-open-modal:hover {
+    background: var(--accent-gold);
+    color: white;
+}
+
+/* Outline Guides */
+.show-guides .header-text,
+.show-guides .main-hadith,
+.show-guides .reference {
+    outline: 1.5px dashed rgba(197, 160, 89, 0.6);
+    outline-offset: 5px;
+    border-radius: 2px;
+    position: relative;
+}
+
+.show-guides .header-text::after,
+.show-guides .main-hadith::after,
+.show-guides .reference::after {
+    content: 'TEXT BOX';
+    position: absolute;
+    top: -18px;
+    right: 0;
+    background: var(--accent-gold);
+    color: white;
+    font-size: 8px;
+    padding: 2px 5px;
+    font-family: sans-serif;
+    font-weight: bold;
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+/* Reset buttons style for cross browser */
+button {
+    font-family: inherit;
+}

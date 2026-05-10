@@ -36,6 +36,35 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [safeBgUrl, setSafeBgUrl] = useState<string>('');
+
+  // Ensure background images are converted to local blobs so html2canvas doesn't fetch dynamic URLs twice
+  useEffect(() => {
+    if (!bgImage) {
+      setSafeBgUrl('');
+      return;
+    }
+    // If it's already a data URI or local blob, use it directly
+    if (bgImage.startsWith('data:') || bgImage.startsWith('blob:')) {
+      setSafeBgUrl(bgImage);
+      return;
+    }
+    
+    // Otherwise, fetch it and convert to a local blob to guarantee it never changes on download
+    let active = true;
+    fetch(bgImage)
+      .then(res => res.blob())
+      .then(blob => {
+        if (!active) return;
+        setSafeBgUrl(URL.createObjectURL(blob));
+      })
+      .catch(err => {
+        console.warn("Failed to fetch bgImage as blob, falling back to direct URL", err);
+        if (active) setSafeBgUrl(bgImage);
+      });
+      
+    return () => { active = false; };
+  }, [bgImage]);
 
   // Responsive scale observer
   useEffect(() => {
@@ -96,7 +125,7 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
   const getRndProps = (pos: Position, setter: (pos: Position) => void) => ({
     bounds: "parent",
     position: { x: pos.x, y: pos.y },
-    size: { width: pos.width, height: pos.height || 'auto' },
+    size: { width: pos.width || '100%', height: pos.height || 'auto' },
     onDragStop: (e: any, d: any) => setter({ ...pos, x: d.x, y: d.y }),
     onResizeStop: (e: any, direction: any, ref: any, delta: any, position: any) => {
       setter({
@@ -128,12 +157,17 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
           id="poster-canvas"
           ref={posterRef}
           className={`absolute inset-0 w-full h-full overflow-hidden bg-white ${isDarkTheme ? 'dark-theme' : ''}`}
-          style={{
-            backgroundImage: `url('${bgImage}')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
         >
+          {/* Render Background as an Image tag instead of CSS to fix html2canvas bugs */}
+          {safeBgUrl && (
+             <img 
+               src={safeBgUrl} 
+               alt="Background" 
+               className="absolute inset-0 w-full h-full object-cover z-0" 
+               crossOrigin="anonymous" 
+             />
+          )}
+
           {/* Background Darken Overlay */}
           <div
             className="absolute inset-0 pointer-events-none z-0"

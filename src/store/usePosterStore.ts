@@ -8,7 +8,7 @@ export interface Position {
   height?: string | number;
 }
 
-interface PosterState {
+export interface PosterState {
   // Content
   headerText: string;
   hadithText: string;
@@ -99,6 +99,7 @@ interface PosterState {
   
   // Reset function
   resetTemplate: () => void;
+  loadTemplate: (state: Partial<PosterState>) => void;
 }
 
 const defaultState = {
@@ -189,6 +190,7 @@ export const usePosterStore = create<PosterState>()(
       setIsModalOpen: (isOpen) => set({ isModalOpen: isOpen }),
 
       resetTemplate: () => set({ ...defaultState }),
+      loadTemplate: (newState) => set((state) => ({ ...state, ...newState })),
     }),
     {
       name: 'islamic-poster-storage',

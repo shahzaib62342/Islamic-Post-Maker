@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Image, Type, Layout, Settings, Download, Palette, Layers, ChevronDown, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload } from 'lucide-react';
+import { Image as ImageIcon, Type, Layout, Settings, Download, Palette, Layers, ChevronDown, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload, Save, Library, Wand2 } from 'lucide-react';
 import { usePosterStore } from '../store/usePosterStore';
+import { useTemplateStore } from '../store/useTemplateStore';
 
 interface SidebarProps {
     onDownload: () => void;
 }
 
 export default function Sidebar({ onDownload }: SidebarProps) {
-    const [activeTab, setActiveTab] = useState<'text' | 'style' | 'bg'>('text');
+    const [activeTab, setActiveTab] = useState<'text' | 'style' | 'bg' | 'gallery'>('text');
     const { isDownloading, setIsModalOpen } = usePosterStore();
 
     return (
@@ -47,12 +48,19 @@ export default function Sidebar({ onDownload }: SidebarProps) {
                 >
                     <Layout className="w-4 h-4" /> Layout
                 </button>
+                <button
+                    onClick={() => setActiveTab('gallery')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-colors ${activeTab === 'gallery' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                    <Library className="w-4 h-4" /> Gallery
+                </button>
             </div>
 
             <div className="overflow-y-auto pb-24 space-y-6">
                 {activeTab === 'text' && <TextControls />}
                 {activeTab === 'style' && <StyleControls />}
                 {activeTab === 'bg' && <LayoutControls onOpenModal={() => setIsModalOpen(true)} />}
+                {activeTab === 'gallery' && <GalleryControls />}
             </div>
 
             <div className="fixed bottom-0 left-0 w-full lg:w-[400px] bg-white border-t p-4 z-10 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
@@ -432,6 +440,9 @@ function LayoutControls({ onOpenModal }: { onOpenModal: () => void }) {
         watermarkUrl, setWatermarkUrl, watermarkOpacity, setWatermarkOpacity
     } = usePosterStore();
 
+    const [aiPrompt, setAiPrompt] = useState('Beautiful islamic mosque geometry');
+    const [isGenerating, setIsGenerating] = useState(false);
+
     const backgrounds = [
         { id: '1', src: 'https://i.ibb.co/5hhKkrh6/Chat-GPT-Image-May-10-2026-11-25-48-AM.png', textColor: '#1a1a1a' },
         { id: '2', src: 'https://i.ibb.co/hxL6st4f/ded6bc86-b223-4870-bb7e-2273b773bf24.png', textColor: '#ffffff' },
@@ -452,6 +463,49 @@ function LayoutControls({ onOpenModal }: { onOpenModal: () => void }) {
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    const generateAiBackground = async () => {
+        if (!aiPrompt.trim()) return;
+        setIsGenerating(true);
+        
+        const primaryUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(aiPrompt)}?width=1080&height=1080&nologo=true&model=turbo&seed=${Math.floor(Math.random() * 100000)}`;
+        const fallbackUrl = `https://loremflickr.com/1080/1080/${encodeURIComponent(aiPrompt.split(' ')[0] || 'mosque')}?random=${Date.now()}`;
+        
+        const loadAsBase64 = (url: string): Promise<string> => {
+            return new Promise((resolve, reject) => {
+                const img = new window.Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.drawImage(img, 0, 0);
+                        resolve(canvas.toDataURL('image/jpeg', 0.8)); // Compress to 80% JPEG
+                    } else {
+                        reject('No canvas context');
+                    }
+                };
+                img.onerror = reject;
+                img.src = url;
+            });
+        };
+
+        try {
+            const base64 = await loadAsBase64(primaryUrl);
+            setBgImage(base64);
+        } catch (e) {
+            console.error("Primary AI generator failed, trying fallback...");
+            try {
+                const base64Fallback = await loadAsBase64(fallbackUrl);
+                setBgImage(base64Fallback);
+            } catch (err) {
+                alert('Both AI generators failed. Please try again later.');
+            }
+        }
+        setIsGenerating(false);
     };
 
     return (
@@ -487,8 +541,31 @@ function LayoutControls({ onOpenModal }: { onOpenModal: () => void }) {
                         </div>
                     ))}
                 </div>
+                
+                <div className="bg-purple-50 p-3 rounded-xl border border-purple-100 mb-3">
+                    <label className="block text-[10px] font-bold text-purple-800 mb-2 uppercase tracking-wider flex items-center gap-1">
+                        <Wand2 className="w-3 h-3" /> AI Background Generator
+                    </label>
+                    <div className="flex gap-2">
+                        <input 
+                            type="text" 
+                            value={aiPrompt}
+                            onChange={(e) => setAiPrompt(e.target.value)}
+                            placeholder="e.g. Mosque at sunset"
+                            className="flex-1 border border-purple-200 rounded p-2 text-xs focus:ring-2 focus:ring-purple-500/20 outline-none"
+                        />
+                        <button 
+                            onClick={generateAiBackground}
+                            disabled={isGenerating}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-3 rounded text-xs font-bold transition-colors disabled:opacity-50"
+                        >
+                            {isGenerating ? 'Wait...' : 'Generate'}
+                        </button>
+                    </div>
+                </div>
+
                 <label className="flex items-center justify-center gap-2 w-full py-3 px-4 border-2 border-dashed border-gray-300 rounded-xl text-xs font-bold text-gray-600 hover:border-amber-500 hover:text-amber-600 transition-colors cursor-pointer bg-gray-50">
-                    <Image className="w-4 h-4" />
+                    <ImageIcon className="w-4 h-4" />
                     Upload Custom Background
                     <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, setBgImage)} />
                 </label>
@@ -530,6 +607,89 @@ function LayoutControls({ onOpenModal }: { onOpenModal: () => void }) {
                     <Settings className="w-4 h-4" />
                     Configure Corner Art
                 </button>
+            </div>
+        </div>
+    );
+}
+
+function GalleryControls() {
+    const { templates, saveTemplate, deleteTemplate } = useTemplateStore();
+    const currentState = usePosterStore();
+    const [templateName, setTemplateName] = useState('');
+
+    const handleSave = () => {
+        if (!templateName.trim()) return alert("Please enter a template name");
+        saveTemplate(templateName.trim(), currentState);
+        setTemplateName('');
+    };
+
+    return (
+        <div className="space-y-6 animate-fadeIn">
+            <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                <label className="block text-[11px] font-bold text-amber-800 mb-3 uppercase tracking-wider">Save Current Design</label>
+                <div className="flex gap-2">
+                    <input 
+                        type="text" 
+                        placeholder="Template Name (e.g., Friday Post)" 
+                        value={templateName}
+                        onChange={(e) => setTemplateName(e.target.value)}
+                        className="flex-1 border border-amber-200 rounded-lg p-2 text-xs focus:ring-2 focus:ring-amber-500/20 outline-none"
+                    />
+                    <button 
+                        onClick={handleSave}
+                        className="bg-amber-600 hover:bg-amber-700 text-white p-2 rounded-lg transition-colors flex items-center justify-center"
+                        title="Save Template"
+                    >
+                        <Save className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-3 uppercase tracking-wider flex justify-between">
+                    <span>Saved Templates ({templates.length})</span>
+                </label>
+                
+                {templates.length === 0 ? (
+                    <div className="text-center p-6 bg-gray-50 border border-dashed border-gray-200 rounded-xl">
+                        <Library className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-xs text-gray-500">No templates saved yet.</p>
+                        <p className="text-[10px] text-gray-400 mt-1">Design a poster and save it here to reuse later.</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-3">
+                        {templates.map(template => (
+                            <div key={template.id} className="bg-white border border-gray-200 p-3 rounded-xl flex items-center justify-between hover:border-amber-500 transition-colors group">
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="text-sm font-bold text-gray-800 truncate">{template.name}</h4>
+                                    <p className="text-[10px] text-gray-400">{new Date(template.createdAt).toLocaleDateString()}</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={() => {
+                                            if(window.confirm('Load this template? Current unsaved changes will be lost.')) {
+                                                currentState.loadTemplate(template.state);
+                                            }
+                                        }}
+                                        className="text-xs font-bold bg-amber-100 text-amber-700 px-3 py-1.5 rounded hover:bg-amber-200 transition-colors"
+                                    >
+                                        Load
+                                    </button>
+                                    <button 
+                                        onClick={() => {
+                                            if(window.confirm('Delete this template?')) {
+                                                deleteTemplate(template.id);
+                                            }
+                                        }}
+                                        className="text-xs font-bold bg-red-50 text-red-600 px-2 py-1.5 rounded hover:bg-red-100 transition-colors opacity-0 group-hover:opacity-100"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -73,12 +73,16 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
         const parentWidth = containerRef.current.clientWidth;
         const parentHeight = containerRef.current.clientHeight;
 
-        // 160px padding for visual breathing room so the poster isn't huge
-        const scaleW = (parentWidth - 160) / logicalWidth;
-        const scaleH = (parentHeight - 160) / logicalHeight;
+        // Adjust padding based on screen size (less padding on mobile)
+        const isMobile = window.innerWidth < 1024;
+        const padding = isMobile ? 32 : 160;
+        
+        const scaleW = (parentWidth - padding) / logicalWidth;
+        const scaleH = (parentHeight - padding) / logicalHeight;
 
-        // Force a slightly smaller maximum scale (0.85) so it always looks clean and "short"
-        setScale(Math.min(scaleW, scaleH, 0.85));
+        // Force a slightly smaller maximum scale (0.85 on desktop, 0.95 on mobile)
+        const maxScale = isMobile ? 0.95 : 0.85;
+        setScale(Math.min(scaleW, scaleH, maxScale));
       }
     };
 

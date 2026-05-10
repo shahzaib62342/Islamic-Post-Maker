@@ -42,7 +42,6 @@ body {
     direction: ltr; /* Keeping UI labels English (LTR) */
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
 }
 
 @media (min-width: 1024px) {
@@ -67,6 +66,8 @@ body {
     align-items: center;
     padding: 20px;
     margin-bottom: 20px;
+    order: -1; /* Mobile: appear on top */
+    min-height: 60vh; /* Ensure it has space on mobile */
 }
 
 @media (min-width: 1024px) {
@@ -75,6 +76,8 @@ body {
         margin-bottom: 0;
         padding: 40px;
         height: 100vh;
+        min-height: auto;
+        order: 0; /* Desktop: normal order */
         width: calc(100% - 450px);
     }
 }

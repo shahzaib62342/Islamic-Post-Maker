@@ -69,14 +69,14 @@ export default function Sidebar({ onDownload }: SidebarProps) {
                 </button>
             </div>
 
-            <div className="overflow-y-auto flex-1 space-y-6 pr-2">
+            <div className="overflow-visible lg:overflow-y-auto flex-1 space-y-6 lg:pr-2">
                 {activeTab === 'text' && <TextControls />}
                 {activeTab === 'style' && <StyleControls />}
                 {activeTab === 'bg' && <LayoutControls onOpenModal={() => setIsModalOpen(true)} />}
                 {activeTab === 'gallery' && <GalleryControls />}
             </div>
 
-            <div className="mt-auto pt-4 bg-white border-t shrink-0">
+            <div className="mt-auto pt-4 bg-white border-t shrink-0 sticky bottom-0 z-50 lg:static">
                 <button
                     onClick={onDownload}
                     disabled={isDownloading}

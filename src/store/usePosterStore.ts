@@ -25,13 +25,22 @@ interface PosterState {
   hadithSize: number;
   refSize: number;
   textColor: string;
-  fontFamily: string;
+  
+  headerFont: string;
+  hadithFont: string;
+  refFont: string;
+  
   textAlign: 'left' | 'center' | 'right' | 'justify';
   lineHeight: number;
+  
+  // Text Box Style
+  textBgStyle: 'none' | 'solid' | 'glass';
   
   // Layout & Background
   showGuides: boolean;
   bgImage: string;
+  bgOverlayOpacity: number;
+  bgOverlayColor: string;
   aspectRatio: 'portrait' | 'square' | 'story';
   
   // Corner Decoration
@@ -62,12 +71,20 @@ interface PosterState {
   setHadithSize: (size: number) => void;
   setRefSize: (size: number) => void;
   setTextColor: (color: string) => void;
-  setFontFamily: (font: string) => void;
+  
+  setHeaderFont: (font: string) => void;
+  setHadithFont: (font: string) => void;
+  setRefFont: (font: string) => void;
+  
   setTextAlign: (align: 'left' | 'center' | 'right' | 'justify') => void;
   setLineHeight: (height: number) => void;
   
+  setTextBgStyle: (style: 'none' | 'solid' | 'glass') => void;
+  
   setShowGuides: (show: boolean) => void;
   setBgImage: (url: string) => void;
+  setBgOverlayOpacity: (opacity: number) => void;
+  setBgOverlayColor: (color: string) => void;
   setAspectRatio: (ratio: 'portrait' | 'square' | 'story') => void;
   
   setActiveCorner: (url: string) => void;
@@ -98,12 +115,20 @@ const defaultState = {
   hadithSize: 18,
   refSize: 10,
   textColor: '#1a1a1a',
-  fontFamily: "'Noto Nastaliq Urdu', serif",
+  
+  headerFont: "'Amiri', serif",
+  hadithFont: "'Noto Nastaliq Urdu', serif",
+  refFont: "'Noto Nastaliq Urdu', serif",
+  
   textAlign: 'center' as const,
   lineHeight: 1.8,
   
+  textBgStyle: 'none' as const,
+  
   showGuides: true,
   bgImage: 'https://i.ibb.co/5hhKkrh6/Chat-GPT-Image-May-10-2026-11-25-48-AM.png',
+  bgOverlayOpacity: 0,
+  bgOverlayColor: '#000000',
   aspectRatio: 'portrait' as const,
   
   activeCorner: '',
@@ -136,12 +161,20 @@ export const usePosterStore = create<PosterState>()(
       setHadithSize: (size) => set({ hadithSize: size }),
       setRefSize: (size) => set({ refSize: size }),
       setTextColor: (color) => set({ textColor: color }),
-      setFontFamily: (font) => set({ fontFamily: font }),
+      
+      setHeaderFont: (font) => set({ headerFont: font }),
+      setHadithFont: (font) => set({ hadithFont: font }),
+      setRefFont: (font) => set({ refFont: font }),
+      
       setTextAlign: (align) => set({ textAlign: align }),
       setLineHeight: (height) => set({ lineHeight: height }),
       
+      setTextBgStyle: (style) => set({ textBgStyle: style }),
+      
       setShowGuides: (show) => set({ showGuides: show }),
       setBgImage: (url) => set({ bgImage: url }),
+      setBgOverlayOpacity: (opacity) => set({ bgOverlayOpacity: opacity }),
+      setBgOverlayColor: (color) => set({ bgOverlayColor: color }),
       setAspectRatio: (ratio) => set({ aspectRatio: ratio }),
       
       setActiveCorner: (url) => set({ activeCorner: url }),

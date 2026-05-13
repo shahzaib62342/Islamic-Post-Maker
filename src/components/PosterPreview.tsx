@@ -7,6 +7,7 @@ const formatText = (str: string) => {
   const html = str
     .replace(/\[r\](.*?)\[\/r\]/gi, '<span class="red-text">$1</span>')
     .replace(/\[g\](.*?)\[\/g\]/gi, '<span class="green-text">$1</span>')
+    .replace(/\[ayah\](\d+)\[\/ayah\]/gi, '<span class="ayah-end">$1</span>')
     .replace(/\[c=(#[0-9a-fA-F]{3,6})\](.*?)\[\/c\]/gi, '<span style="color:$1">$2</span>');
   return { __html: html };
 };
@@ -104,13 +105,13 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
 
         // Adjust padding based on screen size (less padding on mobile)
         const isMobile = window.innerWidth < 1024;
-        const padding = isMobile ? 32 : 160;
+        const padding = isMobile ? 32 : 64;
         
         const scaleW = (parentWidth - padding) / logicalWidth;
         const scaleH = (parentHeight - padding) / logicalHeight;
 
-        // Force a slightly smaller maximum scale (0.85 on desktop, 0.95 on mobile)
-        const maxScale = isMobile ? 0.95 : 0.85;
+        // Force a slightly smaller maximum scale (0.95 on desktop and mobile)
+        const maxScale = 0.95;
         setScale(Math.min(scaleW, scaleH, maxScale));
       }
     };

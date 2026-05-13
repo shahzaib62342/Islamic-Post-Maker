@@ -1,9 +1,108 @@
-import React, { useState } from 'react';
-import { Type, Layout, Settings, Download, Palette, Layers, ChevronDown, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload, Save, Library, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import toast from 'react-hot-toast';
+import { Type, Layout, Settings, Download, ChevronDown, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload, Save, Library, RotateCcw, Layers } from 'lucide-react';
 import { usePosterStore } from '../store/usePosterStore';
 import { useTemplateStore } from '../store/useTemplateStore';
 import { backgrounds } from '../data/backgrounds';
 import { surahs } from '../data/surahs';
+import { trackAction } from '../utils/analytics';
+
+const maxHadiths: Record<string, number> = {
+    'bukhari': 7563,
+    'muslim': 7453,
+    'abudawud': 5274,
+    'tirmidhi': 3956,
+    'nasai': 5758,
+    'ibnmajah': 4341
+};
+
+function SearchableSelect({
+    options,
+    value,
+    onChange,
+    placeholder,
+    className = ""
+}: {
+    options: { value: any, label: string }[],
+    value: any,
+    onChange: (val: any) => void,
+    placeholder: string,
+    className?: string
+}) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+                setSearch("");
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const filteredOptions = options.filter(opt =>
+        opt.label.toLowerCase().includes(search.toLowerCase())
+    ).slice(0, 100);
+
+    const selectedOption = options.find(opt => opt.value === value);
+
+    return (
+        <div className={`relative ${className}`} ref={containerRef}>
+            <div
+                onClick={() => setIsOpen(!isOpen)}
+                className={`w-full bg-white border transition-all duration-200 rounded-xl px-4 py-2.5 text-xs font-bold cursor-pointer flex justify-between items-center ${isOpen ? 'border-gray-900 shadow-lg ring-2 ring-gray-900/5' : 'border-gray-200 hover:border-gray-400'}`}
+            >
+                <span className={`truncate ${!selectedOption ? "text-gray-400" : "text-gray-900"}`}>
+                    {selectedOption ? selectedOption.label : placeholder}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-gray-900' : ''}`} />
+            </div>
+
+            {isOpen && (
+                <div className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden animate-fadeIn origin-top">
+                    <div className="p-2 border-b border-gray-50 bg-gray-50/50">
+                        <input
+                            autoFocus
+                            type="text"
+                            placeholder="Type to filter..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-gray-900 transition-all outline-none"
+                            onClick={e => e.stopPropagation()}
+                        />
+                    </div>
+                    <div className="max-h-60 overflow-y-auto custom-scrollbar py-1">
+                        {filteredOptions.length > 0 ? (
+                            filteredOptions.map(opt => (
+                                <div
+                                    key={opt.value}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onChange(opt.value);
+                                        setIsOpen(false);
+                                        setSearch("");
+                                    }}
+                                    className={`px-4 py-2.5 text-xs font-bold cursor-pointer transition-all flex items-center justify-between ${value === opt.value ? 'bg-gray-900 text-white' : 'hover:bg-gray-50 text-gray-700'}`}
+                                >
+                                    <span>{opt.label}</span>
+                                    {value === opt.value && <div className="w-1.5 h-1.5 rounded-full bg-white shadow-glow" />}
+                                </div>
+                            ))
+                        ) : (
+                            <div className="px-4 py-6 text-[10px] font-black text-gray-400 uppercase text-center tracking-widest">
+                                No matching results
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
 
 function Accordion({ title, children, defaultOpen = false }: { title: string, children: React.ReactNode, defaultOpen?: boolean }) {
     const [isOpen, setIsOpen] = React.useState(defaultOpen);
@@ -32,19 +131,24 @@ export default function Sidebar({ onDownload }: SidebarProps) {
     const { isDownloading, setIsModalOpen } = usePosterStore();
 
     return (
-        <div className="controls flex flex-col h-full bg-white text-gray-900 font-sans">
+        <aside className="controls flex flex-col h-full bg-white text-gray-900 font-sans" aria-label="Poster Controls">
             {/* Header */}
-            <div className="p-6 border-b border-gray-100 shrink-0">
+            <header className="p-6 border-b border-gray-100 shrink-0">
                 <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
-                            <Layers className="w-6 h-6" />
-                            Profilixa
-                        </h2>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Islamic Post Maker</p>
+                    <div className="flex items-center gap-3">
+                        <img src="/logo-black.png" alt="Profilixa" className="w-10 h-10 object-contain" />
+                        <div>
+                            <h2 className="text-xl font-black text-gray-900 tracking-tight leading-tight">Profilixa</h2>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Islamic Post Maker</p>
+                        </div>
                     </div>
                     <button
-                        onClick={() => { if (window.confirm('Reset all changes?')) usePosterStore.getState().resetTemplate(); }}
+                        onClick={() => {
+                            if (window.confirm('Reset all changes?')) {
+                                trackAction("Template Reset");
+                                usePosterStore.getState().resetTemplate();
+                            }
+                        }}
                         className="p-2 text-gray-300 hover:text-red-500 transition-colors rounded-full hover:bg-red-50"
                         title="Reset Designer"
                     >
@@ -62,7 +166,11 @@ export default function Sidebar({ onDownload }: SidebarProps) {
                     ].map((tab) => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
+                            onClick={() => {
+                                trackAction("Tab Switch", { tab: tab.label });
+                                setActiveTab(tab.id as any);
+                            }}
+                            aria-label={`Switch to ${tab.label} tab`}
                             className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg transition-all duration-300 ${activeTab === tab.id ? 'bg-white shadow-md text-gray-900' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200/50'}`}
                         >
                             <tab.icon className="w-4 h-4" />
@@ -70,7 +178,7 @@ export default function Sidebar({ onDownload }: SidebarProps) {
                         </button>
                     ))}
                 </div>
-            </div>
+            </header>
 
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
@@ -97,7 +205,7 @@ export default function Sidebar({ onDownload }: SidebarProps) {
                     )}
                 </button>
             </div>
-        </div>
+        </aside>
     );
 }
 
@@ -154,6 +262,7 @@ function TextControls() {
 
     const [surah, setSurah] = useState<number>(1);
     const [ayah, setAyah] = useState<number>(1);
+    const [ayahTo, setAyahTo] = useState<number>(1);
     const [isFetching, setIsFetching] = useState(false);
 
     const [hadithBook, setHadithBook] = useState<string>('bukhari');
@@ -162,38 +271,59 @@ function TextControls() {
 
     const fetchAyah = async (randomAyahNumber?: number) => {
         setIsFetching(true);
+        trackAction("Fetch Quran Ayah", { surah, ayah, ayahTo });
         try {
-            const url = randomAyahNumber
-                ? `https://api.alquran.cloud/v1/ayah/${randomAyahNumber}/editions/quran-uthmani,ur.jalandhry`
-                : `https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/editions/quran-uthmani,ur.jalandhry`;
-
-            const res = await fetch(url);
-            const data = await res.json();
-            if (data.code === 200 && data.data.length === 2) {
-                setHeaderText('قرآن کریم'); // Quran Kareem in Urdu
-                setHadithText(data.data[1].text); // Urdu Only
-                setRefText(`( القرآن الكريم ، سورة ${data.data[0].surah.name} ، آية ${data.data[0].numberInSurah} )`);
-
-                if (randomAyahNumber) {
+            if (randomAyahNumber) {
+                const url = `https://api.alquran.cloud/v1/ayah/${randomAyahNumber}/editions/quran-uthmani,ur.kanzuliman`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.code === 200 && data.data.length === 2) {
+                    setHeaderText('قرآن کریم');
+                    setHadithText(`${data.data[1].text} [ayah]${data.data[0].numberInSurah}[/ayah]`);
+                    setRefText(`( القرآن الكريم ، سورة ${data.data[0].surah.name} ، آية ${data.data[0].numberInSurah} )`);
                     setSurah(data.data[0].surah.number);
                     setAyah(data.data[0].numberInSurah);
+                    setAyahTo(data.data[0].numberInSurah);
+                }
+            } else if (ayah === ayahTo) {
+                const url = `https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/editions/quran-uthmani,ur.kanzuliman`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.code === 200 && data.data.length === 2) {
+                    setHeaderText('قرآن کریم');
+                    setHadithText(`${data.data[1].text} [ayah]${data.data[0].numberInSurah}[/ayah]`);
+                    setRefText(`( القرآن الكريم ، سورة ${data.data[0].surah.name} ، آية ${data.data[0].numberInSurah} )`);
                 }
             } else {
-                alert("Ayah not found. Please check Surah and Ayah numbers.");
+                // Fetch range
+                const start = Math.min(ayah, ayahTo);
+                const end = Math.max(ayah, ayahTo);
+                const url = `https://api.alquran.cloud/v1/surah/${surah}/editions/quran-uthmani,ur.kanzuliman`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.code === 200 && data.data.length === 2) {
+                    const urduAyahs = data.data[1].ayahs.slice(start - 1, end);
+                    const concatenatedText = urduAyahs.map((a: any) => `${a.text} [ayah]${a.numberInSurah}[/ayah]`).join(' ');
+                    setHeaderText('قرآن کریم');
+                    setHadithText(concatenatedText);
+                    setRefText(`( القرآن الكريم ، سورة ${data.data[0].name} ، آيات ${start} - ${end} )`);
+                }
             }
         } catch (error) {
-            alert("Error fetching Ayah.");
+            toast.error("Error fetching Ayah.");
         }
         setIsFetching(false);
     };
 
     const fetchRandomAyah = () => {
+        trackAction("AI Generate Quran");
         const randomAbsoluteAyah = Math.floor(Math.random() * 6236) + 1;
         fetchAyah(randomAbsoluteAyah);
     };
 
     const fetchHadith = async (numToFetch: number = hadithNum) => {
         setIsFetchingHadith(true);
+        trackAction("Fetch Hadith", { book: hadithBook, number: hadithNum });
         try {
             const url = `https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/urd-${hadithBook}/${numToFetch}.min.json`;
             const res = await fetch(url);
@@ -222,16 +352,13 @@ function TextControls() {
 
         } catch (error) {
             console.error("Hadith fetch error:", error);
-            alert("Hadith not found or API error. Try a different number.");
+            toast.error("Hadith not found or API error. Try a different number.");
         }
         setIsFetchingHadith(false);
     };
 
     const fetchRandomHadith = () => {
-        const maxHadiths: Record<string, number> = {
-            'bukhari': 7563, 'muslim': 7453, 'abudawud': 5274,
-            'tirmidhi': 3956, 'nasai': 5758, 'ibnmajah': 4341
-        };
+        trackAction("AI Generate Hadith");
         const max = maxHadiths[hadithBook] || 3000;
         const randomNum = Math.floor(Math.random() * max) + 1;
         fetchHadith(randomNum);
@@ -245,47 +372,42 @@ function TextControls() {
                     <Library className="w-3 h-3 text-gray-900" />
                     Quran Library
                 </h3>
-                <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="space-y-3 mb-4">
                     <div className="space-y-1">
                         <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Surah</label>
-                        <div className="relative group">
-                            <select 
-                                value={surah} 
-                                onChange={e => {
-                                    const newSurah = Number(e.target.value);
-                                    setSurah(newSurah);
-                                    // Reset ayah if it exceeds the new surah's ayah count
-                                    const newSurahData = surahs.find(s => s.number === newSurah);
-                                    if (newSurahData && ayah > newSurahData.ayahs) {
-                                        setAyah(1);
-                                    }
-                                }} 
-                                className="w-full appearance-none bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-bold focus:ring-2 focus:ring-gray-900 transition-all outline-none pr-10"
-                            >
-                                {surahs.map(s => (
-                                    <option key={s.number} value={s.number}>
-                                        {s.number}. {s.name}
-                                    </option>
-                                ))}
-                            </select>
-                            <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-2.5 pointer-events-none group-hover:text-gray-900 transition-colors" />
-                        </div>
+                        <SearchableSelect
+                            options={surahs.map(s => ({ value: s.number, label: `${s.number}. ${s.name}` }))}
+                            value={surah}
+                            onChange={val => {
+                                const newSurah = val;
+                                setSurah(newSurah);
+                                const newSurahData = surahs.find(s => s.number === newSurah);
+                                if (newSurahData) {
+                                    if (ayah > newSurahData.ayahs) setAyah(1);
+                                    if (ayahTo > newSurahData.ayahs) setAyahTo(1);
+                                }
+                            }}
+                            placeholder="Select Surah"
+                        />
                     </div>
-                    <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Ayah</label>
-                        <div className="relative group">
-                            <select 
-                                value={ayah} 
-                                onChange={e => setAyah(Number(e.target.value))} 
-                                className="w-full appearance-none bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-bold focus:ring-2 focus:ring-gray-900 transition-all outline-none pr-10"
-                            >
-                                {Array.from({ length: surahs.find(s => s.number === surah)?.ayahs || 0 }, (_, i) => i + 1).map(num => (
-                                    <option key={num} value={num}>
-                                        {num}
-                                    </option>
-                                ))}
-                            </select>
-                            <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-2.5 pointer-events-none group-hover:text-gray-900 transition-colors" />
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Ayah From</label>
+                            <SearchableSelect
+                                options={Array.from({ length: surahs.find(s => s.number === surah)?.ayahs || 0 }, (_, i) => ({ value: i + 1, label: String(i + 1) }))}
+                                value={ayah}
+                                onChange={val => setAyah(val)}
+                                placeholder="From"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Ayah To</label>
+                            <SearchableSelect
+                                options={Array.from({ length: surahs.find(s => s.number === surah)?.ayahs || 0 }, (_, i) => ({ value: i + 1, label: String(i + 1) }))}
+                                value={ayahTo}
+                                onChange={val => setAyahTo(val)}
+                                placeholder="To"
+                            />
                         </div>
                     </div>
                 </div>
@@ -316,25 +438,32 @@ function TextControls() {
                 <div className="grid grid-cols-3 gap-3 mb-4">
                     <div className="col-span-2 space-y-1">
                         <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Book</label>
-                        <select
+                        <SearchableSelect
+                            options={[
+                                { value: 'bukhari', label: 'Bukhari' },
+                                { value: 'muslim', label: 'Muslim' },
+                                { value: 'abudawud', label: 'Abu Dawud' },
+                                { value: 'tirmidhi', label: 'Tirmidhi' },
+                                { value: 'nasai', label: 'Nasa\'i' },
+                                { value: 'ibnmajah', label: 'Ibn Majah' }
+                            ]}
                             value={hadithBook}
-                            onChange={e => setHadithBook(e.target.value)}
-                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-bold focus:ring-2 focus:ring-gray-900 transition-all outline-none appearance-none"
-                        >
-                            <option value="bukhari">Bukhari</option>
-                            <option value="muslim">Muslim</option>
-                            <option value="abudawud">Abu Dawud</option>
-                            <option value="tirmidhi">Tirmidhi</option>
-                            <option value="nasai">Nasa'i</option>
-                            <option value="ibnmajah">Ibn Majah</option>
-                        </select>
+                            onChange={val => {
+                                setHadithBook(val);
+                                if (hadithNum > maxHadiths[val]) {
+                                    setHadithNum(1);
+                                }
+                            }}
+                            placeholder="Select Book"
+                        />
                     </div>
                     <div className="space-y-1">
                         <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">No.</label>
-                        <input
-                            type="number" min="1" value={hadithNum}
-                            onChange={e => setHadithNum(Number(e.target.value))}
-                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-bold focus:ring-2 focus:ring-gray-900 transition-all outline-none"
+                        <SearchableSelect
+                            options={Array.from({ length: maxHadiths[hadithBook] }, (_, i) => ({ value: i + 1, label: String(i + 1) }))}
+                            value={hadithNum}
+                            onChange={val => setHadithNum(val)}
+                            placeholder="Hadith No."
                         />
                     </div>
                 </div>
@@ -591,7 +720,7 @@ function StyleControls() {
 
 function LayoutControls({ onOpenModal }: { onOpenModal: () => void }) {
     const {
-        bgImage, setBgImage, setTextColor,
+        bgImage, setBgImage,
         bgOverlayOpacity, setBgOverlayOpacity,
         bgOverlayColor, setBgOverlayColor,
         aspectRatio, setAspectRatio,
@@ -753,6 +882,7 @@ function GalleryControls() {
 
     const handleSave = () => {
         if (!templateName.trim()) return alert("Please enter a template name");
+        trackAction("Template Saved", { name: templateName.trim() });
         saveTemplate(templateName.trim(), currentState);
         setTemplateName('');
     };
@@ -807,6 +937,7 @@ function GalleryControls() {
                                     <button
                                         onClick={() => {
                                             if (window.confirm('Load this template? Current unsaved changes will be lost.')) {
+                                                trackAction("Template Loaded", { name: template.name });
                                                 currentState.loadTemplate(template.state);
                                             }
                                         }}

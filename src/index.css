@@ -34,7 +34,6 @@ body {
 /* Controls Panel Styling */
 .controls {
     background: white;
-    padding: 20px;
     width: 100%;
     box-sizing: border-box;
     border-top: 1px solid #e5e7eb;
@@ -86,7 +85,7 @@ body {
 #poster-canvas {
     width: 100%;
     max-width: 1080px; /* Let the scaling wrapper handle size */
-    background-image: url('https://i.ibb.co/5hhKkrh6/Chat-GPT-Image-May-10-2026-11-25-48-AM.png');
+    background-image: url('/bg-islamic.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -468,3 +467,8 @@ button {
 .animate-fadeIn {
     animation: fadeIn 0.3s ease-out forwards;
 }
+
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }

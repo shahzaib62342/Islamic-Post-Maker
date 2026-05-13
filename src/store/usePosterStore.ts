@@ -127,7 +127,7 @@ const defaultState = {
   textBgStyle: 'none' as const,
   
   showGuides: true,
-  bgImage: 'https://i.ibb.co/5hhKkrh6/Chat-GPT-Image-May-10-2026-11-25-48-AM.png',
+  bgImage: '/bg-islamic.png',
   bgOverlayOpacity: 0,
   bgOverlayColor: '#000000',
   aspectRatio: 'portrait' as const,

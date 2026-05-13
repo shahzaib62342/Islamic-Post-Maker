@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import './index.css';
 
 import Sidebar from './components/Sidebar';
@@ -21,16 +21,14 @@ export default function App() {
     // Wait for state update (guides to hide)
     setTimeout(async () => {
       try {
-        const canvas = await html2canvas(posterRef.current!, {
-          useCORS: true,
-          scale: 3,
-          backgroundColor: null,
-          logging: false
+        const dataUrl = await toPng(posterRef.current!, {
+          pixelRatio: 3,
+          backgroundColor: '#ffffff'
         });
 
         const link = document.createElement('a');
         link.download = 'Islamic-Poster.png';
-        link.href = canvas.toDataURL('image/png', 1.0);
+        link.href = dataUrl;
         link.click();
       } catch (err) {
         console.error("Download failed:", err);

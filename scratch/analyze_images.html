@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<body>
+<div id="results"></div>
+<script>
+const images = [
+"bg-islamic.png",
+"islamic-poster (1).jpg",
+"islamic-poster (10).jpg",
+"islamic-poster (11).jpg",
+"islamic-poster (12).jpg",
+"islamic-poster (13).jpg",
+"islamic-poster (14).jpg",
+"islamic-poster (15).jpg",
+"islamic-poster (16).jpg",
+"islamic-poster (17).jpg",
+"islamic-poster (18).jpg",
+"islamic-poster (19).jpg",
+"islamic-poster (2).jpg",
+"islamic-poster (20).jpg",
+"islamic-poster (21).jpg",
+"islamic-poster (22).jpg",
+"islamic-poster (23).jpg",
+"islamic-poster (24).jpg",
+"islamic-poster (25).jpg",
+"islamic-poster (26).jpg",
+"islamic-poster (27).jpg",
+"islamic-poster (28).jpg",
+"islamic-poster (29).jpg",
+"islamic-poster (3).jpg",
+"islamic-poster (30).jpg",
+"islamic-poster (31).jpg",
+"islamic-poster (32).jpg",
+"islamic-poster (4).jpg",
+"islamic-poster (5).jpg",
+"islamic-poster (6).jpg",
+"islamic-poster (7).jpg",
+"islamic-poster (8).jpg",
+"islamic-poster (9).jpg"
+];
+
+const results = document.getElementById('results');
+
+images.forEach(imgName => {
+    const img = new Image();
+    img.onload = () => {
+        const ratio = img.naturalWidth / img.naturalHeight;
+        let type = 'unknown';
+        if (Math.abs(ratio - 1) < 0.1) type = 'square';
+        else if (Math.abs(ratio - 0.56) < 0.1) type = 'story';
+        else if (Math.abs(ratio - 0.67) < 0.1) type = 'portrait';
+        else if (ratio < 0.8) type = 'portrait'; // generic vertical
+        
+        results.innerHTML += `<div>${imgName}: ${img.naturalWidth}x${img.naturalHeight} (${type})</div>`;
+    };
+    img.src = '../public/' + imgName;
+});
+</script>
+</body>
+</html>

@@ -35,8 +35,37 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
   const logicalHeight = aspectRatio === 'square' ? 450 : aspectRatio === 'story' ? 800 : 675;
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const prevHeightRef = useRef<number>(logicalHeight);
   const [scale, setScale] = useState(1);
   const [safeBgUrl, setSafeBgUrl] = useState<string>('');
+
+  // Auto adjust positions when aspect ratio (logicalHeight) changes
+  useEffect(() => {
+    if (prevHeightRef.current !== logicalHeight) {
+      const prevSafeAreaHeight = prevHeightRef.current - 72;
+      const newSafeAreaHeight = logicalHeight - 72;
+      const ratio = newSafeAreaHeight / prevSafeAreaHeight;
+      const state = usePosterStore.getState();
+      
+      const updateY = (pos: Position) => {
+        let y = typeof pos.y === 'number' ? pos.y : parseInt(String(pos.y)) || 0;
+        let newY = Math.round(y * ratio);
+        
+        // Ensure it doesn't get pushed completely out of the new visible bounds
+        const maxSafeY = Math.max(0, newSafeAreaHeight - 40);
+        if (newY > maxSafeY) newY = maxSafeY;
+        
+        return { ...pos, y: newY };
+      };
+
+      state.setHeaderPos(updateY(state.headerPos));
+      state.setHadithPos(updateY(state.hadithPos));
+      state.setRefPos(updateY(state.refPos));
+      state.setWatermarkPos(updateY(state.watermarkPos));
+
+      prevHeightRef.current = logicalHeight;
+    }
+  }, [logicalHeight]);
 
   // Ensure background images are converted to local blobs so html2canvas doesn't fetch dynamic URLs twice
   useEffect(() => {
@@ -102,15 +131,14 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
     }
 
     let w = pos.width;
-    if (w === 'auto') w = '100%'; // Force 100% instead of auto to prevent text overflow
+    // Force exact pixel width instead of % or auto to prevent RND bounding bugs
+    if (w === 'auto' || w === '100%') w = 396; 
 
     let x = typeof pos.x === 'string' ? 0 : pos.x;
 
     // Manually enforce bounds on load so it doesn't wait for a click to snap back
     const safeAreaWidth = 396; // 450 - 27px left padding - 27px right padding
-    let widthNum = safeAreaWidth;
-    if (typeof w === 'number') widthNum = w;
-    else if (typeof w === 'string' && w.endsWith('px')) widthNum = parseInt(w, 10);
+    let widthNum = typeof w === 'number' ? w : parseInt(String(w), 10) || safeAreaWidth;
 
     if (x + widthNum > safeAreaWidth) {
       x = Math.max(0, safeAreaWidth - widthNum);
@@ -128,8 +156,9 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
   // Common RND props
   const getRndProps = (pos: Position, setter: (pos: Position) => void) => ({
     bounds: "parent",
+    scale: scale,
     position: { x: pos.x, y: pos.y },
-    size: { width: pos.width || '100%', height: pos.height || 'auto' },
+    size: { width: pos.width || 396, height: pos.height || 'auto' },
     onDragStop: (_e: any, d: any) => setter({ ...pos, x: d.x, y: d.y }),
     onResizeStop: (_e: any, _direction: any, ref: any, _delta: any, position: any) => {
       setter({
@@ -168,7 +197,6 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
                src={safeBgUrl} 
                alt="Background" 
                className="absolute inset-0 w-full h-full object-cover z-0" 
-               crossOrigin="anonymous" 
              />
           )}
 

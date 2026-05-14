@@ -56,6 +56,7 @@ export interface PosterState {
   // Transient App State (Ignored by persist)
   isDownloading: boolean;
   isModalOpen: boolean;
+  isSidebarVisible: boolean;
 
   // Actions
   setHeaderText: (text: string) => void;
@@ -96,6 +97,7 @@ export interface PosterState {
   setWatermarkOpacity: (opacity: number) => void;
   setIsDownloading: (isDownloading: boolean) => void;
   setIsModalOpen: (isOpen: boolean) => void;
+  setIsSidebarVisible: (isVisible: boolean) => void;
   
   // Reset function
   resetTemplate: () => void;
@@ -142,6 +144,7 @@ const defaultState = {
 
   isDownloading: false,
   isModalOpen: false,
+  isSidebarVisible: true,
 };
 
 export const usePosterStore = create<PosterState>()(
@@ -188,6 +191,7 @@ export const usePosterStore = create<PosterState>()(
 
       setIsDownloading: (isDownloading) => set({ isDownloading }),
       setIsModalOpen: (isOpen) => set({ isModalOpen: isOpen }),
+      setIsSidebarVisible: (isVisible) => set({ isSidebarVisible: isVisible }),
 
       resetTemplate: () => set({ ...defaultState }),
       loadTemplate: (newState) => set((state) => ({ ...state, ...newState })),
@@ -199,6 +203,7 @@ export const usePosterStore = create<PosterState>()(
         ...state,
         isDownloading: undefined,
         isModalOpen: undefined,
+        isSidebarVisible: undefined,
       }),
     }
   )

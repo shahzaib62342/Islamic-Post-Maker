@@ -24,7 +24,7 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
     headerSize, hadithSize, refSize,
     textColor, headerFont, hadithFont, refFont, textAlign, lineHeight,
     textBgStyle,
-    showGuides, bgImage, bgOverlayOpacity, bgOverlayColor, activeCorner,
+    showGuides, setShowGuides, bgImage, bgOverlayOpacity, bgOverlayColor, activeCorner,
     cornerSide, cornerVSide, cornerSize,
     aspectRatio, watermarkUrl, watermarkOpacity
   } = usePosterStore();
@@ -105,13 +105,12 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
 
         // Adjust padding based on screen size (less padding on mobile)
         const isMobile = window.innerWidth < 1024;
-        const padding = isMobile ? 32 : 64;
+        const padding = isMobile ? 16 : 64;
         
         const scaleW = (parentWidth - padding) / logicalWidth;
         const scaleH = (parentHeight - padding) / logicalHeight;
 
-        // Force a slightly smaller maximum scale (0.95 on desktop and mobile)
-        const maxScale = 0.95;
+        const maxScale = isMobile ? 1.0 : 0.95;
         setScale(Math.min(scaleW, scaleH, maxScale));
       }
     };
@@ -183,13 +182,20 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
           width: logicalWidth,
           height: logicalHeight,
           transform: `scale(${scale})`,
-          transformOrigin: 'center center'
+          transformOrigin: 'center center',
+          marginBottom: window.innerWidth < 1024 ? `${80 * scale}px` : '0',
+          marginTop: window.innerWidth < 1024 ? `${20 * scale}px` : '0'
         }}
-        className="relative flex-shrink-0 shadow-2xl transition-transform duration-200"
+        className="relative flex-shrink-0 shadow-2xl transition-all duration-200"
       >
         <div
           id="poster-canvas"
           ref={posterRef}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowGuides(false);
+            }
+          }}
           className={`absolute inset-0 w-full h-full overflow-hidden bg-white ${isDarkTheme ? 'dark-theme' : ''}`}
         >
           {/* Render Background as an Image tag instead of CSS to fix html2canvas bugs */}
@@ -211,28 +217,64 @@ export default function PosterPreview({ posterRef }: PosterPreviewProps) {
           <div className="absolute inset-0 z-10" style={{ padding: '36px 27px' }}>
             <div className="relative w-full h-full pointer-events-none">
 
-              <Rnd {...getRndProps(cleanHeaderPos, setHeaderPos)} style={{ zIndex: 10, pointerEvents: 'auto' }}>
+              <Rnd 
+                {...getRndProps(cleanHeaderPos, setHeaderPos)} 
+                style={{ zIndex: 10, pointerEvents: 'auto' }}
+              >
                 <div
-                  className={`header-text w-full h-full p-2 rounded-lg transition-colors ${textBgStyle === 'solid' ? 'bg-white/90 shadow-sm' : textBgStyle === 'glass' ? 'bg-white/30 backdrop-blur-md shadow-sm border border-white/20' : ''}`}
+                  className={`header-text w-full h-full p-2 rounded-lg transition-colors ${!showGuides ? 'cursor-pointer' : ''} ${textBgStyle === 'solid' ? 'bg-white/90 shadow-sm' : textBgStyle === 'glass' ? 'bg-white/30 backdrop-blur-md shadow-sm border border-white/20' : ''}`}
                   style={{ fontSize: `${headerSize}px`, color: textColor, textAlign, lineHeight, fontFamily: headerFont }}
                   dangerouslySetInnerHTML={formatText(headerText)}
                 ></div>
+                <div 
+                  onMouseDown={(e) => { 
+                    if (!showGuides) {
+                      e.stopPropagation(); 
+                      setShowGuides(true); 
+                    }
+                  }}
+                  className={`absolute inset-0 z-20 ${!showGuides ? 'cursor-pointer pointer-events-auto bg-white/0' : 'pointer-events-none'}`}
+                />
               </Rnd>
 
-              <Rnd {...getRndProps(cleanHadithPos, setHadithPos)} style={{ zIndex: 10, pointerEvents: 'auto' }}>
+              <Rnd 
+                {...getRndProps(cleanHadithPos, setHadithPos)} 
+                style={{ zIndex: 10, pointerEvents: 'auto' }}
+              >
                 <div
-                  className={`main-hadith w-full h-full p-4 rounded-xl transition-colors ${textBgStyle === 'solid' ? 'bg-white/90 shadow-sm' : textBgStyle === 'glass' ? 'bg-white/30 backdrop-blur-md shadow-sm border border-white/20' : ''}`}
+                  className={`main-hadith w-full h-full p-4 rounded-xl transition-colors ${!showGuides ? 'cursor-pointer' : ''} ${textBgStyle === 'solid' ? 'bg-white/90 shadow-sm' : textBgStyle === 'glass' ? 'bg-white/30 backdrop-blur-md shadow-sm border border-white/20' : ''}`}
                   style={{ fontSize: `${hadithSize}px`, color: textColor, textAlign, lineHeight, fontFamily: hadithFont }}
                   dangerouslySetInnerHTML={formatText(hadithText)}
                 ></div>
+                <div 
+                  onMouseDown={(e) => { 
+                    if (!showGuides) {
+                      e.stopPropagation(); 
+                      setShowGuides(true); 
+                    }
+                  }}
+                  className={`absolute inset-0 z-20 ${!showGuides ? 'cursor-pointer pointer-events-auto bg-white/0' : 'pointer-events-none'}`}
+                />
               </Rnd>
 
-              <Rnd {...getRndProps(cleanRefPos, setRefPos)} style={{ zIndex: 10, pointerEvents: 'auto' }}>
+              <Rnd 
+                {...getRndProps(cleanRefPos, setRefPos)} 
+                style={{ zIndex: 10, pointerEvents: 'auto' }}
+              >
                 <div
-                  className={`reference w-full h-full p-2 rounded-lg transition-colors ${textBgStyle === 'solid' ? 'bg-white/90 shadow-sm' : textBgStyle === 'glass' ? 'bg-white/30 backdrop-blur-md shadow-sm border border-white/20' : ''}`}
+                  className={`reference w-full h-full p-2 rounded-lg transition-colors ${!showGuides ? 'cursor-pointer' : ''} ${textBgStyle === 'solid' ? 'bg-white/90 shadow-sm' : textBgStyle === 'glass' ? 'bg-white/30 backdrop-blur-md shadow-sm border border-white/20' : ''}`}
                   style={{ fontSize: `${refSize}px`, color: textColor, textAlign, lineHeight, fontFamily: refFont }}
                   dangerouslySetInnerHTML={formatText(refText)}
                 ></div>
+                <div 
+                  onMouseDown={(e) => { 
+                    if (!showGuides) {
+                      e.stopPropagation(); 
+                      setShowGuides(true); 
+                    }
+                  }}
+                  className={`absolute inset-0 z-20 ${!showGuides ? 'cursor-pointer pointer-events-auto bg-white/0' : 'pointer-events-none'}`}
+                />
               </Rnd>
             </div>
           </div>

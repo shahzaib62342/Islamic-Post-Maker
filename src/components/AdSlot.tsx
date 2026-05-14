@@ -30,7 +30,7 @@ export default function AdSlot({ slot, width, height, label = "Advertisement", c
   if (!slot) {
     return (
       <div 
-        className={`bg-gray-100 border border-dashed border-gray-300 rounded-xl flex items-center justify-center text-gray-400 font-bold text-[10px] uppercase tracking-widest select-none ${className}`}
+        className={`relative bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center overflow-hidden group ${className}`}
         style={{ 
           width: width || '100%', 
           height: height || '100%', 
@@ -39,9 +39,12 @@ export default function AdSlot({ slot, width, height, label = "Advertisement", c
           ...style 
         }}
       >
-        <div className="flex flex-col items-center gap-2">
-          <span className="opacity-50">{label}</span>
-          <div className="w-8 h-px bg-gray-200" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-100/50 to-transparent" />
+        <div className="relative flex flex-col items-center gap-3">
+          <div className="px-3 py-1 bg-white rounded-full shadow-sm border border-gray-100 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+            {label}
+          </div>
+          <div className="w-12 h-0.5 bg-gray-200 rounded-full opacity-50" />
         </div>
       </div>
     );

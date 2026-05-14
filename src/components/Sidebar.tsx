@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { Type, Layout, Settings, Download, ChevronDown, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload, Save, Library, RotateCcw, Layers } from 'lucide-react';
+import { Type, Layout, Settings, Download, ChevronDown, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload, Save, Library, RotateCcw, Layers, X } from 'lucide-react';
 import { usePosterStore } from '../store/usePosterStore';
 import { useTemplateStore } from '../store/useTemplateStore';
 import { backgrounds } from '../data/backgrounds';
 import { surahs } from '../data/surahs';
 import { trackAction } from '../utils/analytics';
+import AdSlot from './AdSlot';
 
 const maxHadiths: Record<string, number> = {
     'bukhari': 7563,
@@ -123,17 +124,22 @@ function Accordion({ title, children, defaultOpen = false }: { title: string, ch
 }
 
 interface SidebarProps {
-    onDownload: () => void;
+    onExport: () => void;
 }
 
-export default function Sidebar({ onDownload }: SidebarProps) {
+export default function Sidebar({ onExport }: SidebarProps) {
     const [activeTab, setActiveTab] = useState<'text' | 'style' | 'bg' | 'gallery'>('text');
-    const { isDownloading, setIsModalOpen } = usePosterStore();
+    const { isDownloading, setIsModalOpen, isSidebarVisible, setIsSidebarVisible } = usePosterStore();
+
+    const onDownload = onExport;
 
     return (
-        <aside className="controls flex flex-col h-full bg-white text-gray-900 font-sans" aria-label="Poster Controls">
-            {/* Header */}
-            <header className="p-6 border-b border-gray-100 shrink-0">
+        <aside
+            className={`controls flex flex-col bg-white text-gray-900 font-sans transition-all duration-500 ease-in-out ${!isSidebarVisible ? 'minimized' : ''}`}
+            aria-label="Poster Controls"
+        >
+            {/* Desktop Header */}
+            <header className="hidden lg:block p-6 border-b border-gray-100 shrink-0">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                         <img src="/logo-black.png" alt="Profilixa" className="w-10 h-10 object-contain" />
@@ -156,21 +162,20 @@ export default function Sidebar({ onDownload }: SidebarProps) {
                     </button>
                 </div>
 
-                {/* Modern Tabs */}
                 <div className="flex bg-gray-100/80 p-1 rounded-xl gap-1">
                     {[
                         { id: 'text', icon: Type, label: 'Text' },
-                        { id: 'bg', icon: Layout, label: 'Canvas' },
-                        { id: 'gallery', icon: Library, label: 'Designs' },
-                        { id: 'style', icon: Settings, label: 'Settings' }
+                        { id: 'bg', icon: Layout, label: 'Background' },
+                        { id: 'gallery', icon: Library, label: 'Saved' },
+                        { id: 'style', icon: Settings, label: 'Style' }
                     ].map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => {
                                 trackAction("Tab Switch", { tab: tab.label });
                                 setActiveTab(tab.id as any);
+                                setIsSidebarVisible(true);
                             }}
-                            aria-label={`Switch to ${tab.label} tab`}
                             className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg transition-all duration-300 ${activeTab === tab.id ? 'bg-white shadow-md text-gray-900' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200/50'}`}
                         >
                             <tab.icon className="w-4 h-4" />
@@ -180,30 +185,84 @@ export default function Sidebar({ onDownload }: SidebarProps) {
                 </div>
             </header>
 
+            {/* Mobile Header (Minimal) */}
+            <div className="lg:hidden flex items-center justify-between px-6 py-4 border-b border-gray-50">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsSidebarVisible(false)}
+                        className="p-1 -ml-1 text-gray-400 hover:text-gray-900 transition-colors"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{activeTab} Controls</span>
+                </div>
+                <button
+                    onClick={() => {
+                        if (window.confirm('Reset all changes?')) {
+                            trackAction("Template Reset");
+                            usePosterStore.getState().resetTemplate();
+                        }
+                    }}
+                    className="p-1.5 text-gray-400 hover:text-red-500"
+                >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+            </div>
+
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
+            <div className="flex-[1_1_0%] overflow-y-auto p-5 custom-scrollbar relative" style={{ minHeight: 0 }}>
                 {activeTab === 'text' && <TextControls />}
                 {activeTab === 'bg' && <LayoutControls onOpenModal={() => setIsModalOpen(true)} />}
                 {activeTab === 'style' && <StyleControls />}
                 {activeTab === 'gallery' && <GalleryControls />}
             </div>
 
-            {/* Actions */}
-            <div className="p-6 border-t border-gray-100 bg-gray-50/50 shrink-0">
-                <button
-                    onClick={onDownload}
-                    disabled={isDownloading}
-                    className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all shadow-xl hover:shadow-2xl active:scale-95 disabled:opacity-50 disabled:scale-100 group"
-                >
-                    {isDownloading ? (
-                        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    ) : (
-                        <>
-                            <Download className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
-                            Export Poster
-                        </>
-                    )}
-                </button>
+            {/* Bottom Actions & Tabs */}
+            <div className="shrink-0 bg-white border-t border-gray-100 lg:bg-gray-50/50">
+                {/* Export Button - Hidden on mobile, sticky on desktop */}
+                <div className="hidden lg:block p-4 lg:p-6 pb-2 lg:pb-6">
+                    <button
+                        onClick={onDownload}
+                        disabled={isDownloading}
+                        className="group relative w-full bg-gradient-to-br from-gray-900 to-black text-white py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-[0_20px_50px_rgba(0,0,0,0.2)] active:scale-95 disabled:opacity-50 overflow-hidden border border-white/5"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                        {isDownloading ? (
+                            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                        ) : (
+                            <>
+                                <div className="bg-white/10 p-2 rounded-xl group-hover:bg-white group-hover:text-black transition-colors">
+                                    <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                                </div>
+                                <span className="hidden lg:inline">Export</span>
+                                <span className="lg:hidden text-sm">Export</span>
+                            </>
+                        )}
+                    </button>
+                </div>
+
+                {/* Mobile Tabs Navigation */}
+                <div className="lg:hidden flex border-t border-gray-50 p-2 pb-safe-area relative z-[60]">
+                    {[
+                        { id: 'text', icon: Type, label: 'Text' },
+                        { id: 'bg', icon: Layout, label: 'Background' },
+                        { id: 'gallery', icon: Library, label: 'Saved' },
+                        { id: 'style', icon: Settings, label: 'Style' }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => {
+                                trackAction("Tab Switch", { tab: tab.label });
+                                setActiveTab(tab.id as any);
+                                setIsSidebarVisible(true);
+                            }}
+                            className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all ${activeTab === tab.id ? 'text-gray-900' : 'text-gray-400'}`}
+                        >
+                            <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'stroke-[2.5px]' : ''}`} />
+                            <span className={`text-[8px] font-black uppercase tracking-widest ${activeTab === tab.id ? 'text-gray-900' : 'text-gray-400'}`}>{tab.label}</span>
+                        </button>
+                    ))}
+                </div>
             </div>
         </aside>
     );
@@ -424,7 +483,7 @@ function TextControls() {
                         disabled={isFetching}
                         className="flex-1 bg-white hover:bg-gray-50 text-gray-800 text-[10px] font-black uppercase tracking-wider py-3 rounded-xl transition-all border border-gray-200 shadow-sm active:scale-95 disabled:opacity-50"
                     >
-                        AI Generate
+                        Random
                     </button>
                 </div>
             </div>
@@ -480,7 +539,7 @@ function TextControls() {
                         disabled={isFetchingHadith}
                         className="flex-1 bg-white hover:bg-gray-50 text-gray-800 text-[10px] font-black uppercase tracking-wider py-3 rounded-xl transition-all border border-gray-200 shadow-sm active:scale-95 disabled:opacity-50"
                     >
-                        AI Generate
+                        Random
                     </button>
                 </div>
             </div>
@@ -563,6 +622,10 @@ function TextControls() {
                     </div>
                 </>
             )}
+            {/* Sidebar Ad Card - Only on Desktop */}
+            <div className="mt-8 pt-6 border-t border-gray-100 hidden lg:block">
+                <AdSlot slot="4567890123" height="180px" label="Promoted Content" />
+            </div>
         </div>
     );
 }
@@ -714,6 +777,10 @@ function StyleControls() {
                     </div>
                 </div>
             </Accordion>
+            {/* Sidebar Ad Card - Only on Desktop */}
+            <div className="mt-8 pt-6 border-t border-gray-100 hidden lg:block">
+                <AdSlot slot="4567890123" height="180px" label="Promoted Content" />
+            </div>
         </div>
     );
 }
@@ -742,24 +809,27 @@ function LayoutControls({ onOpenModal }: { onOpenModal: () => void }) {
 
     return (
         <div className="space-y-4 animate-fadeIn">
-            <Accordion title="Canvas Dimension" defaultOpen={true}>
-                <div className="grid grid-cols-1 gap-2 bg-gray-50 p-2 rounded-2xl border border-gray-100">
+            <Accordion title="Background Size" defaultOpen={true}>
+                <div className="grid grid-cols-3 gap-2">
                     {[
-                        { id: 'square', label: 'Post', sub: 'Instagram / FB (1:1)', icon: Layout },
-                        { id: 'portrait', label: 'Portrait', sub: 'Instagram / FB (4:5)', icon: AlignCenter },
-                        { id: 'story', label: 'Story', sub: 'TikTok / Reels (9:16)', icon: Layers }
+                        { id: 'square', label: 'Square', ratio: '1:1', icon: Layout, w: 'w-4', h: 'h-4' },
+                        { id: 'portrait', label: 'Portrait', ratio: '4:5', icon: Layout, w: 'w-4', h: 'h-5' },
+                        { id: 'story', label: 'Story', ratio: '9:16', icon: Layout, w: 'w-3.5', h: 'h-6' }
                     ].map((opt) => (
                         <button
                             key={opt.id}
-                            onClick={() => setAspectRatio(opt.id as any)}
-                            className={`flex items-center gap-4 p-4 rounded-xl transition-all ${aspectRatio === opt.id ? 'bg-white shadow-md border border-gray-200' : 'hover:bg-gray-100/50 text-gray-500'}`}
+                            onClick={() => {
+                                trackAction("Change Aspect Ratio", { ratio: opt.id });
+                                setAspectRatio(opt.id as any);
+                            }}
+                            className={`flex flex-col items-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-300 ${aspectRatio === opt.id ? 'border-gray-900 bg-gray-900 text-white shadow-lg' : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'}`}
                         >
-                            <div className={`p-2 rounded-lg ${aspectRatio === opt.id ? 'bg-gray-900 text-white' : 'bg-white text-gray-400'}`}>
-                                <opt.icon className="w-4 h-4" />
+                            <div className={`rounded-sm border-2 flex items-center justify-center transition-colors ${aspectRatio === opt.id ? 'border-white/40' : 'border-gray-100'} ${opt.w} ${opt.h}`}>
+                                <opt.icon className="w-2 h-2" />
                             </div>
-                            <div className="text-left">
-                                <p className={`text-xs font-black uppercase tracking-tight ${aspectRatio === opt.id ? 'text-gray-900' : 'text-gray-600'}`}>{opt.label}</p>
-                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{opt.sub}</p>
+                            <div className="text-center">
+                                <p className="text-[9px] font-black uppercase tracking-tighter">{opt.label}</p>
+                                <p className={`text-[7px] font-bold uppercase tracking-widest mt-0.5 ${aspectRatio === opt.id ? 'text-white/50' : 'text-gray-300'}`}>{opt.ratio}</p>
                             </div>
                         </button>
                     ))}
@@ -871,6 +941,10 @@ function LayoutControls({ onOpenModal }: { onOpenModal: () => void }) {
                     Configure Corner Art
                 </button>
             </Accordion>
+            {/* Sidebar Ad Card - Only on Desktop */}
+            <div className="mt-8 pt-6 border-t border-gray-100 hidden lg:block">
+                <AdSlot slot="4567890123" height="180px" label="Promoted Content" />
+            </div>
         </div>
     );
 }
@@ -922,7 +996,7 @@ function GalleryControls() {
                         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-50">
                             <Library className="w-8 h-8 text-gray-200" />
                         </div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No Archived Designs</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No Saved Designs</p>
                         <p className="text-[9px] font-bold text-gray-300 uppercase tracking-tighter mt-1 px-8 text-center">Save your creative work to access it anytime</p>
                     </div>
                 ) : (
@@ -961,6 +1035,10 @@ function GalleryControls() {
                     </div>
                 )}
             </Accordion>
+            {/* Sidebar Ad Card - Only on Desktop */}
+            <div className="mt-8 pt-6 border-t border-gray-100 hidden lg:block">
+                <AdSlot slot="4567890123" height="180px" label="Promoted Content" />
+            </div>
         </div>
     );
 }
